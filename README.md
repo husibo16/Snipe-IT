@@ -39,6 +39,7 @@
 你可以一条命令直接运行脚本：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash -s
+curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash -s 一键全装
+
 
 
