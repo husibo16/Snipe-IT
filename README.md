@@ -40,6 +40,3 @@
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash -s 一键全装
-
-
-
