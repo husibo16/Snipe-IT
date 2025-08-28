@@ -34,5 +34,5 @@
 2. 如果你不想手动下载脚本，可以直接用下面的一条命令自动获取并运行：
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash
+   curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash -s
 
