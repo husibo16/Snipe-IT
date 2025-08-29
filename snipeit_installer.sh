@@ -74,7 +74,7 @@ MAIL_TLS_VERIFY_PEER="${MAIL_TLS_VERIFY_PEER:-false}"
 
 # 会话/队列/缓存（与你模板一致）
 SESSION_DRIVER="${SESSION_DRIVER:-file}"
-QUEUE_DRIVER="${QUEUE_DRIVER:-sync}" # Snipe-IT .env 使用 QUEUE_DRIVER（不是 QUEUE_CONNECTION）
+QUEUE_DRIVER="${QUEUE_DRIVER:-sync}"
 CACHE_DRIVER="${CACHE_DRIVER:-file}"
 CACHE_PREFIX="${CACHE_PREFIX:-snipeit}"
 
@@ -352,48 +352,49 @@ parse_args() {
 
 # ---------------------- 中文交互菜单 ---------------------------
 interactive_menu() {
-  echo
-  banner "★ Snipe-IT 全量安装器（中文交互）★"
-  echo -e "${_c_info}请选择操作（输入序号）:${_c_reset}"
-  PS3="👉 你的选择: "
-  local opts=(
-    "体检_precheck"
-    "安装_db_mariadb"
-    "安装_php"
-    "安装_composer"
-    "安装_node"
-    "安装_redis"
-    "安装_supervisor"
-    "拉取_配置_snipeit"
-    "配置_nginx"
-    "初始化_依赖_数据库"
-    "配置_防火墙"
-    "测试_smtp"
-    "一键全装"
-    "状态_status"
-    "退出_quit"
-  )
   while true; do
-    select opt in "${opts[@]}"; do
-      if [[ ! $REPLY =~ ^[0-9]+$ ]]; then
+    echo
+    banner "★ Snipe-IT 全量安装器（中文交互）★"
+    cat <<'EOF_MENU'
+  1) 体检_precheck          - 环境体检/基础工具安装（含 Git）
+  2) 安装_db_mariadb        - 安装并初始化 MariaDB，创建库和账户
+  3) 安装_php               - 安装 PHP(自动识别次版本) 及扩展 + PHP-FPM
+  4) 安装_composer          - 安装 Composer
+  5) 安装_node              - 安装 Node.js & npm
+  6) 安装_redis             - 安装并启用 Redis
+  7) 安装_supervisor        - 安装并配置 Supervisor（Laravel 队列）
+  8) 拉取_配置_snipeit      - 克隆 Snipe-IT 并生成/校正 .env
+  9) 配置_nginx             - 安装并配置 Nginx（指向 public/）
+ 10) 初始化_依赖_数据库     - composer 依赖 + APP_KEY + migrate
+ 11) 配置_防火墙            - UFW 放行 OpenSSH & Nginx Full
+ 12) 测试_smtp              - 测试到 SMTP 主机:端口的连通性（不发信）
+ 13) 一键全装               - 按最佳顺序执行全部步骤
+ 14) 状态_status            - 展示环境信息（IP/PHP/FPM 等）
+  q) 退出
+EOF_MENU
+    read -r -p "👉 你的选择: " choice
+    case "$choice" in
+      1) SUBCOMMAND="体检_precheck" ;;
+      2) SUBCOMMAND="安装_db_mariadb" ;;
+      3) SUBCOMMAND="安装_php" ;;
+      4) SUBCOMMAND="安装_composer" ;;
+      5) SUBCOMMAND="安装_node" ;;
+      6) SUBCOMMAND="安装_redis" ;;
+      7) SUBCOMMAND="安装_supervisor" ;;
+      8) SUBCOMMAND="拉取_配置_snipeit" ;;
+      9) SUBCOMMAND="配置_nginx" ;;
+      10) SUBCOMMAND="初始化_依赖_数据库" ;;
+      11) SUBCOMMAND="配置_防火墙" ;;
+      12) SUBCOMMAND="测试_smtp" ;;
+      13) SUBCOMMAND="一键全装" ;;
+      14) SUBCOMMAND="状态_status" ;;
+      q | Q) SUBCOMMAND="退出_quit" ;;
+      *)
         echo -e "${_c_err}无效选项${_c_reset}"
-        break
-      fi
-      case "$opt" in
-        "退出_quit")
-          SUBCOMMAND="退出_quit"
-          return 0
-          ;;
-        "")
-          echo -e "${_c_err}无效选项${_c_reset}"
-          break
-          ;;
-        *)
-          SUBCOMMAND="$opt"
-          return 0
-          ;;
-      esac
-    done || return 0
+        continue
+        ;;
+    esac
+    break
   done
 }
 
@@ -406,10 +407,9 @@ ensure_service() {
   systemctl --no-pager --full status "$1" | sed -n '1,5p' || true
 }
 set_kv() {
-  # set_kv <file> KEY VALUE  （若存在则替换，否则追加；不改动注释行）
   local file="$1" key="$2" val="$3" esc
   touch "$file"
-  esc=$(printf '%s' "$val" | sed -e 's/[\\/&|]/\\&/g')
+  esc=$(printf '%s' "$val" | sed -e 's/[\\/\&|]/\\&/g')
   if grep -qE "^${key}=" "$file"; then
     sed -i "s|^${key}=.*|${key}=${esc}|" "$file"
   else
@@ -432,7 +432,6 @@ cmd_install_db() {
   banner "② 安装 MariaDB"
   apt install -y mariadb-server mariadb-client
   ensure_service mariadb
-  # 初始化数据库与账号（重复执行安全）
   mysql -uroot --protocol=socket <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_DATABASE}\` CHARACTER SET ${DB_CHARSET} COLLATE ${DB_COLLATION};
 CREATE USER IF NOT EXISTS '${DB_USERNAME}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
@@ -528,7 +527,6 @@ cmd_snipe_config_env() {
   cd "$APP_DIR" || die "未找到应用目录: $APP_DIR"
   [[ -f .env ]] || cp .env.example .env
 
-  # —— 交互询问（按回车保留默认）——
   echo -e "${_c_title}基础设置：${_c_reset}"
   read -r -p "APP_URL [${APP_URL}]: " v || true
   APP_URL="${v:-$APP_URL}"
@@ -585,10 +583,8 @@ cmd_snipe_config_env() {
     QUEUE_DRIVER="sync"
   fi
 
-  # —— 写入 .env（严格使用你给的字段名）——
   set_kv ".env" "APP_ENV" "production"
   set_kv ".env" "APP_DEBUG" "false"
-  # APP_KEY 由 artisan 生成
   set_kv ".env" "APP_URL" "${APP_URL}"
   set_kv ".env" "APP_TIMEZONE" "'${APP_TIMEZONE}'"
   set_kv ".env" "APP_LOCALE" "'${APP_LOCALE}'"
@@ -685,7 +681,6 @@ server {
         include fastcgi_params;
     }
 
-    # 安全：屏蔽隐藏文件
     location ~ /\. {
         deny all;
     }
@@ -756,7 +751,6 @@ cmd_install_all() {
 
 # ---------------------- 主入口 ------------------------------
 main() {
-  # 主入口: 解析参数并循环执行子命令
   require_bash
   parse_args "$@"
 
@@ -765,8 +759,8 @@ main() {
   [[ $TEE_LOG == "true" ]] && _enable_tee_log
   [[ -n $CONFIG_FILE ]] && load_env_file "$CONFIG_FILE"
 
-  acquire_lock  # 获取锁防止并发执行
-  mk_tmpdir     # 创建临时目录
+  acquire_lock
+  mk_tmpdir
 
   run_once=false
   [[ -n $SUBCOMMAND ]] && run_once=true
