@@ -36,7 +36,15 @@
 
 ## 🚀 快速安装
 
+交互模式（推荐首次使用）：
+```bash
+sudo bash snipeit_installer.sh
+
 你可以一条命令直接运行脚本：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash -s 一键全装
+
+---
+
+##
