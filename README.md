@@ -45,7 +45,8 @@ sudo bash snipeit_installer.sh
 curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash -s 一键全装
 ```
 ---
-🖼️ 运行效果截图
+🖼️ 运行效果
+
 ★ Snipe-IT 全量安装器（中文交互）★
   1) 体检_precheck          - 环境体检/基础工具安装（含 Git）
   2) 安装_db_mariadb        - 安装并初始化 MariaDB，创建库和账户
@@ -61,8 +62,11 @@ curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_inst
  12) 测试_smtp              - 测试到 SMTP 主机:端口的连通性（不发信）
  13) 一键全装               - 按最佳顺序执行全部步骤
  14) 状态_status            - 展示环境信息（IP/PHP/FPM 等）
-  q) 退出
+ 
+ q) 退出
+
 👉 你的选择: 
+
 ---
 
 ⚠️ 注意事项
