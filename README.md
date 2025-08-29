@@ -38,13 +38,12 @@
 
 交互模式（推荐首次使用）
 ```bash
+curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh -o snipeit_installer.sh
+chmod +x snipeit_installer.sh
 sudo bash snipeit_installer.sh
 ```
-你可以一条命令直接运行脚本
-```bash
-curl -fsSL https://raw.githubusercontent.com/husibo16/Snipe-IT/main/snipeit_installer.sh | sudo bash -s 一键全装
-```
 ---
+
 🖼️ 运行效果
 
 ★ Snipe-IT 全量安装器（中文交互）★
