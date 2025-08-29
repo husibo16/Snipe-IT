@@ -416,9 +416,6 @@ set_kv() {
     echo "${key}=${val}" >>"$file"
   fi
 }
-service_status() {
-  systemctl is-active "$1" >/dev/null 2>&1 && echo "运行中" || echo "未运行"
-}
 
 # ---------------------- 子命令实现 -------------------------
 cmd_precheck() {
@@ -728,49 +725,9 @@ cmd_test_smtp() {
 
 cmd_status() {
   banner "环境状态"
-  local php_ver php_fpm mariadb_status redis_status supervisor_status nginx_status composer_ver node_ver snipeit_status precheck_status
-
-  if command -v php >/dev/null 2>&1; then
-    php_ver=$(php -v 2>/dev/null | head -n1)
-    php_fpm=$(service_status "php$(php_minor)-fpm")
-  else
-    php_ver="未安装"
-    php_fpm="未运行"
-  fi
-
-  if command -v composer >/dev/null 2>&1; then
-    composer_ver=$(composer --version 2>/dev/null | head -n1)
-  else
-    composer_ver="未安装"
-  fi
-
-  if command -v node >/dev/null 2>&1; then
-    node_ver=$(node -v 2>/dev/null)
-  else
-    node_ver="未安装"
-  fi
-
-  precheck_status=$(command -v git >/dev/null 2>&1 && command -v curl >/dev/null 2>&1 && command -v wget >/dev/null 2>&1 && echo "已安装" || echo "缺失")
-  mariadb_status=$(service_status mariadb)
-  redis_status=$(service_status redis-server)
-  supervisor_status=$(service_status supervisor)
-  nginx_status=$(service_status nginx)
-
-  if [[ -d $APP_DIR && -f "$APP_DIR/.env" ]]; then
-    snipeit_status="就绪"
-  else
-    snipeit_status="缺失"
-  fi
-
-  local labels=(
-    "脚本" "目录" "IP" "PID" "Bash" "日志" "Precheck" "MariaDB" "PHP" "PHP-FPM" "Composer" "Node" "Redis" "Supervisor" "Snipe-IT" "Nginx"
-  )
-  local values=(
-    "$SCRIPT_NAME" "$SCRIPT_DIR" "$(get_local_ip)" "$PID" "$BASH_VERSION" "$LOG_FILE" "$precheck_status" "$mariadb_status" "$php_ver" "$php_fpm" "$composer_ver" "$node_ver" "$redis_status" "$supervisor_status" "$snipeit_status" "$nginx_status"
-  )
-  for i in "${!labels[@]}"; do
-    printf "  %-12s : %s\n" "${labels[i]}" "${values[i]}"
-  done
+  local labels=("脚本" "目录" "IP" "PID" "Bash" "日志" "PHP" "FPM_sock" "AppDir")
+  local values=("$SCRIPT_NAME" "$SCRIPT_DIR" "$(get_local_ip)" "$PID" "$BASH_VERSION" "$LOG_FILE" "$(php -v 2>/dev/null | head -n1 || echo N/A)" "$(php_fpm_sock)" "$APP_DIR")
+  for i in "${!labels[@]}"; do printf "  %-10s : %s\n" "${labels[i]}" "${values[i]}"; done
 }
 
 cmd_install_all() {
